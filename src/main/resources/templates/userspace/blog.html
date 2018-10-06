@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4">
+<head th:replace="~{fragments/header :: header}">
+<!-- 加载中动画的css -->
+<link rel="stylesheet" th:href="@{/css/loading.css}" >
+</head>
+<body>
+<!-- Page Content -->
+<div class="container blog-content-container">
+
+    <div class="row">
+
+        <!-- Blog Entries Column -->
+        <div class="col-md-8">
+
+            <!-- Blog Post -->
+            <div class="card mb-4">
+                <div class="card-block">
+					<h2 class="card-title">
+						<span> <a href="/u/waylau" title="waylau"
+							th:href="'/u/' + ${blogModel.user.username}"
+							th:title="${blogModel.user.username}"> <img
+								src="/images/avatar-defualt.jpg"
+								th:src="${blogModel.user.avatar} == null 
+									? '/images/avatar-defualt.jpg' 
+									: ${blogModel.user.avatar}"
+								class="blog-avatar-50">
+						</a>
+						</span> <a href="/u/waylau/blogs/1" class="card-link" title="waylau"
+							th:href="'/u/' + ${blogModel.user.username} + '/blogs/'+ ${blogModel.id}"
+							th:title="${blogModel.user.username}"
+							th:text="${blogModel.title}"> OAuth 2.0 认证的原理与实践 </a>
+					</h2>
+					<div class="card-text">
+						<a href="/u/waylau" th:href="'/u/' + ${blogModel.user.username}"
+							class="card-link" th:text="${blogModel.user.username}">waylau</a>
+						发表于 [[${#dates.format(blogModel.createTime, 'yyyy-MM-dd
+						HH:mm')}]] <i class="fa fa-eye" aria-hidden="true">[[${blogModel.readSize}]]</i>
+						<i class="fa fa-heart-o" aria-hidden="true">[[${blogModel.voteSize}]]</i>
+						<i class="fa fa-comment-o" aria-hidden="true">[[${blogModel.commentSize}]]</i>
+						<a href="/u/waylau" th:if="${isBlogOwner}"
+							th:href="'/u/' + ${blogModel.user.username}+ '/blogs/edit/'+ ${blogModel.id}"
+							class="btn btn-primary float-right">编辑</a>
+                        <a href="javascript:void(0)" th:if="${isBlogOwner}"
+							class="btn btn-primary float-right blog-delete-blog"
+							th:attr="fileServerDeleteUrl=${fileServerDeleteUrl}"
+							>删除</a>
+					</div>
+					<hr>
+					<article class="post-content" th:utext="${blogModel.htmlContent}">
+
+					</article>
+					<hr>
+				</div>
+                
+	               <div class="card-block">
+	
+	
+						<h5>
+							分类：<a
+								th:href="'/u/'+${blogModel.user.username} + '/blogs?category='+${blogModel.category.id} "
+								th:text="${blogModel.category.name}"> Spring Boot </a>
+						</h5>
+	
+						<h5>
+							标签： <a
+								th:each="tag : ${#strings.arraySplit(blogModel.tags , ',')}"
+								th:href="'/u/' + ${blogModel.user.username}  + '/blogs?keyword='+ ${tag}">
+								<span class="badge badge-default" th:text="${tag}">Web
+									Design</span>
+							</a>
+						</h5>
+					</div>
+
+					<div class="card-block">
+						<h5>评论：</h5>
+						<div class="row">
+							<div class="col-lg-12">
+								<textarea class="blog-textarea" placeholder="看帖需留言~"
+									id="commentContent"></textarea>
+							</div>
+						</div>
+						<button class="btn btn-primary float-right" id="submitComment">发表评论</button>
+						<!--此用户未点赞则显示点赞按钮,否则显示带有currentVote.id的取消点赞按钮-->
+						<button class="btn btn-primary float-right"
+							th:if="${currentVote} == null" id="submitVote">点赞</button>
+						<button class="btn btn-primary float-right" th:if="${currentVote}"
+							th:attr="voteId=${currentVote.id}" id="cancelVote">取消点赞</button>
+					</div>
+
+
+					<div class="card-block" id="mainContainer">
+					    <!-- 加载ing模态框部分 -->
+                        <div class="loading" id="loading">
+                          <span>评论加载中...
+                            <img src="/images/loading.gif" class="gif">
+                          </span>
+                        </div>
+                        <!--一条评论的div-->
+						<div class="row" id="mainContainerRepleace" th:each="comment,iterationStatus : ${comments}" style="margin-bottom: 80px;"
+							th:object="${comment}" th:if="${comment.pid} == 0" th:attr="currentUser=${currentUser},currentUserId=${currentUserId}">  <!--只显示父评论-->
+							<!--头像-->
+							<div class="card-title col-lg-1 col-md-2">
+								<span>
+                                    <a href="/u/waylau" th:href="'/u/'+ *{user.username}" title="waylau"
+                                        th:title="*{user.username}">
+                                        <img
+                                            src="/images/avatar-defualt.jpg"
+                                            th:src="*{user.avatar} == null ? '/images/avatar-defualt.jpg' : *{user.avatar}"
+                                            class="blog-avatar-50">
+                                    </a>
+								</span>
+							</div>
+							<div class="card-text commment-Item col-lg-11 col-md-10" th:attr="commentId=*{id}">
+								<a href="/u/waylau" th:href="'/u/'+ *{user.username}"
+									class="card-link" th:text="*{user.username}">waylau
+								</a>
+								[[${iterationStatus.index} + 1]]楼
+								[[${#dates.format(comment.createTime, 'yyyy-MM-dd HH:mm')}]]
+								<!-- 当前用户*{user.username}是评论者 因为遍历的对象是th:object="${comment} -->
+								<a th:if="${currentUser} eq *{user.username}"
+									href="javascript:void(0)" class="blog-delete-comment"
+									th:attr="commentId=*{id}"><i class="fa fa-trash-o" aria-hidden="true"></i>
+								</a>
+								<div class="commment-Item-btn-group">
+								    <span th:text="*{content}">评论内容</span>
+                                    <a  class="reply_comment label-info float-sm-right" style="text-decoration: none;padding-left: 5px;"
+                                    href="javascript:void(0)" onclick="javascript:replyComment(this);" th:attr="userId=*{user.id} ,userName=*{user.username},isReplyComment=false">
+                                      <span aria-hidden="true"></span> 回复
+                                    </a>
+                                    <a class="blog-label-success float-sm-right" href="javascript:void(0);" onclick="voteOrcancelComment(this);" th:attr="commentId=*{id}"
+                                    style="text-decoration: none;">
+                                      <!-- 当前遍历的此评论id是否被包含在用户点赞的所有评论的id集合中 -->
+                                      <span th:if="${#lists.contains(commentIdList,comment.id)}" class="cancelvote glyphicon glyphicon-heart" aria-hidden="true">取消</span>
+                                      <span th:if="${!#lists.contains(commentIdList,comment.id)}" class="vote glyphicon glyphicon-heart-empty" aria-hidden="true">赞</span>
+                                      ([[${#lists.size(comment.voteList)}]])
+                                    </a>
+								</div>
+								<br>
+
+								<!-- 此评论的子评论 -->
+								<div class="card-block reply-commment-Item" th:each="childComment:*{commentList}" th:object="${childComment}"
+								style="background-color: #e5e5e5;">
+								    <div class="row">
+                                        <!--头像,姓名,时间同行-->
+                                        <div class="card-title">
+                                            <span>
+                                                <a href="/u/waylau" th:href="'/u/'+ *{user.username}" title="waylau"
+                                                    th:title="*{user.username}">
+                                                    <img
+                                                        src="/images/avatar-defualt.jpg"
+                                                        th:src="*{user.avatar} == null ? '/images/avatar-defualt.jpg' : *{user.avatar}"
+                                                        class="blog-avatar-25">
+                                                </a>
+                                            </span>
+                                        </div>
+
+                                        <div class="card-text">
+                                            <a href="/u/waylau" th:href="'/u/'+ *{user.username}"
+                                                class="card-link" th:text="*{user.username}">waylau
+                                            </a>
+                                            <span th:if="*{replyUser!=null}">回复
+                                                <a class="card-link" th:href="'/u/'+ *{replyUser.username}"
+                                                    th:text="*{replyUser.username}">
+                                                </a>
+                                            </span>
+                                            [[${#dates.format(childComment.createTime, 'yyyy-MM-dd HH:mm')}]]
+                                        </div>
+                                        <!-- 当前用户*{user.username}是评论者 因为遍历的对象是th:object="${comment} -->
+                                        <a th:if="${currentUser} eq *{user.username}"
+                                            href="javascript:void(0)" class="blog-delete-comment"
+                                            th:attr="commentId=*{id}"><i class="fa fa-trash-o" aria-hidden="true"></i>
+                                        </a>
+                                    </div>
+
+                                    <div class="commment-Item-btn-group">
+                                        <span th:text="*{content}">评论内容</span>
+                                        <a  class="reply_comment label-info float-sm-right" style="text-decoration: none;padding-left: 5px;"
+                                        href="javascript:void(0)" onclick="javascript:replyComment(this);" th:attr="userId=*{user.id},userName=*{user.username},isReplyComment=true">
+                                          <span aria-hidden="true"></span> 回复
+                                        </a>
+                                        <a class="blog-label-success float-sm-right" href="javascript:void(0);" onclick="voteOrcancelComment(this)" th:attr="commentId=*{id}"
+                                        style="text-decoration: none;">
+                                          <!-- 当前遍历的此评论id是否被包含在用户点赞的所有评论的id集合中 -->
+                                          <span th:if="${#lists.contains(commentIdList,childComment.id)}" class="cancelvote glyphicon glyphicon-heart" aria-hidden="true">取消</span>
+                                          <span th:if="${!#lists.contains(commentIdList,childComment.id)}" class="vote glyphicon glyphicon-heart-empty" aria-hidden="true">赞</span>
+                                          ([[${#lists.size(childComment.voteList)}]])
+                                        </a>
+                                    </div>
+
+                                </div>
+							</div>
+
+						</div>
+
+					</div>
+
+				</div>
+
+        </div>
+
+        <!--回复子评论的模态框-->
+        <div class="modal fade" id="reply-comment-modal" tabindex="-1" role="dialog"  aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                   <div class="card-block" id="reply_comment_form" attr="pid,replyUserId,isReplyComment">  <!--传递数据-->
+                       <h5>评论：</h5>
+                       <div class="row">
+                           <div class="col-lg-12">
+                               <textarea class="blog-textarea" placeholder="回复内容~"
+                                   id="reply_commentContent"></textarea>
+                           </div>
+                       </div>
+                       <button class="btn btn-primary float-right" id="reply_comment_btn" onclick="reply(this)">回复评论</button>
+                       <button class="btn btn-warning float-right" data-dismiss="modal">取消</button>
+                   </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal -->
+        </div>
+
+
+
+        <!-- 右侧栏目 -->
+        <div class="col-md-4">
+            <div>
+                <!-- 文章目录 -->
+                <div class="card ">
+                    <h5 class="card-header"><i class="fa fa-bars" aria-hidden="true"></i> 文章目录</h5>
+                    <div class="card-block">
+                        <div class="row">
+                            <div id="category" class="col-lg-12"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+    <!-- /.row -->
+
+</div>
+<!-- /.container -->
+
+
+<div th:replace="~{fragments/footer :: footer}">...</div>
+
+
+<!-- JavaScript -->
+<script th:inline="javascript">
+var blogId = [[${blogModel.id}]];
+var blogFileId = [[${blogModel.blogFileId}]];
+var blogUrl = '/u/' + [[${blogModel.user.username}]] + '/blogs/'+ [[${blogModel.id}]] ;
+var fileServerDeleteUrl = [[${fileServerDeleteUrl}]];
+</script>
+
+<script src="../../js/userspace/blog.js" th:src="@{/js/userspace/blog.js}"></script>
+
+
+</body>
+</html>

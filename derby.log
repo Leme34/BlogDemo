@@ -1,0 +1,13 @@
+----------------------------------------------------------------
+Fri Sep 28 22:03:07 CST 2018:
+正在使用类加载程序 sun.misc.Launcher$ExtClassLoader@1bc6a36e 引导数据库
+目录 memory:D:\ideaWorkPlace\blog-demo1\testdb 中的 Derby 版本 The Apache Software Foundation - Apache Derby - 10.11.1.2 - (1629631) 实例 a816c00e-0166-207d-810a-00001e66da38
+已从 file:/C:/Program%20Files/Java/jdk1.8.0_151/jre/lib/ext/derby.jar 加载
+java.vendor=Oracle Corporation
+java.runtime.version=1.8.0_151-b12
+user.dir=D:\ideaWorkPlace\blog-demo1
+os.name=Windows 10
+os.arch=amd64
+os.version=10.0
+derby.system.home=null
+数据库类加载程序已启动 - derby.database.classpath=''

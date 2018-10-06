@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/header :: header">
+    <!-- jquery -->
+    <script type="text/javascript" th:src="@{/js/jquery-3.1.1.min.js}"></script>
+</head>
+    <body>
+
+    <div class="container blog-content-container">
+ 
+		<form  th:action="@{/registerUser}" method="post">
+			<h2 class="form-signin-heading">注册成为博主</h2>
+
+			<div class=" col-md-5" th:if="${msg}">
+                <p  class="blog-label-error" th:text="${msg}" style="color: red"></p>
+            </div>
+
+			<div class="form-group col-md-5">
+				<label for="username" class="col-form-label">账号</label>
+				<input type="text" class="form-control" id="username" name="username" maxlength="50" placeholder="请输入账号，至少3个字符，至多20个"/>
+	 
+			</div>
+			<div class="form-group col-md-5">
+				<label for="email" class="col-form-label">邮箱（一个邮箱只能注册一个账号）</label>
+				<input type="email" class="form-control" id="email" name="email" maxlength="50" placeholder="请输入邮箱"/>
+				<button  type="button" class="btn btn-primary " id="sendEmail" style="margin-left: auto;margin-bottom: 10px;" >获取邮箱验证码</button>
+				<input type="text" class="form-control" id="captcha" name="captcha" maxlength="50" placeholder="请输入邮箱验证码"/>
+			</div>
+
+
+			<div class="form-group col-md-5">
+				<label for="username" class="col-form-label">姓名</label>
+				<input type="text" class="form-control" id="name" name="name" maxlength="20" placeholder="请输入姓名，至少2个字符，至多20个" />
+			</div>
+			<div class="form-group col-md-5">
+				<label for="password" class="col-form-label">密码</label>
+				<input type="password" class="form-control" id="password" name="password" maxlength="30" placeholder="请输入密码，字母或特殊符号和数字结合" />
+			</div>
+			<div class="form-group col-md-5">
+				<button type="submit" class="btn btn-primary">提交</button>
+			</div>
+ 
+		</form>
+ 
+    </div> <!-- /container -->
+ 
+	
+	<div th:replace="fragments/footer :: footer">...</div>
+    </body>
+
+
+<script type="text/javascript">
+
+    //点击发送获取邮箱验证码按钮事件
+    $("#sendEmail").click(function() {
+        //1.校验邮箱格式
+        var reg = new RegExp("^([a-z0-9A-Z]+[-|\\.]?)+[a-z0-9A-Z]@([a-z0-9A-Z]+(-[a-z0-9A-Z]+)?\\.)+[a-zA-Z]{2,}$"); //正则表达式
+        if (reg.test($("#email").val())){
+            //2.点击按钮触发倒计时
+            settime();
+
+            //3.发送ajax请求controller层发送邮件
+              $.ajax({
+                url:"/sendEmail",
+                data:{"email":$("#email").val()},
+                type:"GET",
+                success:function(result) {
+                  if(result.code == 0){
+                      //toastr 通知提示插件
+                      toastr.success("邮件发送成功!");
+                  }
+                }
+              });
+          }else {
+                toastr.error("请填写正确的邮箱地址!");
+        }
+    });
+
+    //60s间隔
+    var countdown = 60;
+
+    //实现每隔60s发送一次
+    function settime() {
+        //倒计时60s完成,按钮重新使能
+        if (countdown == 0){
+              $("#sendEmail").attr("disabled",false);
+              document.getElementById("sendEmail").innerHTML = "重新获取验证码";
+              //重新倒计时60s
+              countdown = 60;
+        }else{  //倒计时未完成
+            $("#sendEmail").attr("disabled",true);
+            //踩坑!!!innerHTML是js原生dom对象属性,不能用jquery找dom对象
+            document.getElementById("sendEmail").innerHTML = "重新获取("+countdown+"s)";
+//            document.getElementById("sendEmail").setAttribute("value","重新获取("+countdown+"s)");
+            countdown--;
+            //1s后继续调用settime
+            setTimeout(settime,1000);
+        }
+    }
+
+
+
+
+</script>
+
+</html>
