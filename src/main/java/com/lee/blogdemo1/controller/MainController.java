@@ -31,10 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MainController {
 
     private static final Long ROLE_USER_AUTHORITY_ID = 2L;
-
-    //保存用户此次发送的邮箱验证码
-    private ConcurrentHashMap<String,String> catptchaMap = new ConcurrentHashMap<>();
-
+    
     @Autowired
     MailService mailService;
     @Autowired
@@ -96,11 +93,16 @@ public class MainController {
      */
     @GetMapping("/sendEmail")
     @ResponseBody
-    public Map getCaptcha(@RequestParam("email") String email){
+    public Map getCaptcha(@RequestParam("email") String email, HttpServletRequest request){
+        //TODO 邮箱不能为空
+        
+        //TODO 查询该邮箱是否已被注册,若已被注册直接返回
+        
         //发邮件进行验证
         String captcha = mailService.sendMail(email);
-        //保存到线程安全的Map中
-        catptchaMap.put("captcha",captcha);
+        
+        //当前请求生成的验证码放入session,在注册handler取出验证
+        request.getSession().setAttribute("captcha", captcha);
 //        System.out.println("getCaptcha() captcha="+captcha);
 
         //返回状态码给ajax
@@ -117,9 +119,14 @@ public class MainController {
     public String registerUser(User user,     //默认注入bean相同字段的属性
                                @RequestParam("captcha") String captcha,
                                RedirectAttributes redirectAttributes,
-                               ModelMap modelMap) {
-        //检查邮箱验证码是否匹配
-        if (captcha.equals(catptchaMap.get("captcha"))) {
+                               ModelMap modelMap,
+                               HttpServletRequest request) {
+        //TODO 查询该邮箱是否已被注册,若已被注册直接返回
+        
+        //取出当前请求生成的验证码
+        String geneCaptcha = (String) request.getSession().getAttribute("captcha");
+        //检查邮箱验证码是否匹配1
+        if (captcha.equals(geneCaptcha)) {
 
             List<Authority> authorities = new ArrayList<>();
             //从数据库中查到默认权限,并加入权限列表
