@@ -53,6 +53,7 @@ public class User implements UserDetails, Serializable {
 	@Column(length = 200)
 	private String avatar; // 头像图片地址
 
+	//关联查询权限表
 	@ManyToMany(cascade = CascadeType.DETACH, fetch = FetchType.EAGER)
 	@JoinTable(name = "user_authority", joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "id"),
 		inverseJoinColumns = @JoinColumn(name = "authority_id", referencedColumnName = "id"))
@@ -92,10 +93,14 @@ public class User implements UserDetails, Serializable {
 		this.email = email;
 	}
 	
-	public Collection<? extends GrantedAuthority> getAuthorities() {
-		//  需将 List<Authority> 转成 List<SimpleGrantedAuthority>，否则前端拿不到角色列表名称
+	/**
+	 * security的UserDetails接口的方法，取得该用户的所有权限保存在security中
+	 * @return
+	 */
+	 public Collection<? extends GrantedAuthority> getAuthorities() {
+		//  遍历关联查询的权限,转为List<SimpleGrantedAuthority>并返回
 		List<SimpleGrantedAuthority> simpleAuthorities = new ArrayList<>();
-		for(GrantedAuthority authority : this.authorities){
+		for (GrantedAuthority authority : this.authorities) {
 			simpleAuthorities.add(new SimpleGrantedAuthority(authority.getAuthority()));
 		}
 		return simpleAuthorities;
